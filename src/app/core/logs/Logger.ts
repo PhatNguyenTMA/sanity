@@ -1,17 +1,48 @@
-import {LOG_CLASS_LEVEL} from "../Common/Enum";
-import {transports} from "winston";
+import {green, red} from "colors";
+
 let _ = require("lodash");
-let winston = require("winston");
 const callsites = require("callsites");
+let winston = require("winston");
+import {LOG_CLASS_LEVEL} from "../Common/Enum";
+
+const config = {
+    levels: {
+        error: 0,
+        debug: 1,
+        warn: 2,
+        info: 4
+    },
+    colors: {
+        error: "red",
+        debug: "blue",
+        warn: "yellow",
+        info: "cyan"
+    }
+};
+
+winston.addColors(config.colors);
+
+let alignColorsAndTime = winston.format.combine(
+    winston.format.colorize({
+        all: true
+    }),
+    winston.format.printf(
+        (info: any) => {
+            return `API \t | logLevel: ${info.level}, message: ${info.message}, location: ${info.location}, time: ${info.time}`;
+        }
+    )
+);
 
 export class Logger {
     public static LOG_LEVELS = [LOG_CLASS_LEVEL.INFO, LOG_CLASS_LEVEL.ERROR, LOG_CLASS_LEVEL.DEBUG, LOG_CLASS_LEVEL.WARNING];
     public static NOLOG = false;
-    private static logProvider = new winston.Logger({
+    private static logProvider = winston.createLogger({
+        levels: config.levels,
         transports: [
-            new  (winston.transports.Console)({level: "info", stringify: true, colorize: true, json: true})
-        ],
-        exitOnError: false
+            new (winston.transports.Console)({
+                format: alignColorsAndTime
+            })
+        ]
     });
 
     static formatInfoMessage(logLevel: string, location: any, message: string, data?: any) {

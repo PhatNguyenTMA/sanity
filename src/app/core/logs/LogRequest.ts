@@ -3,12 +3,42 @@ let _ = require("lodash");
 import {LOG_CLASS_LEVEL} from "../common/Enum";
 import {Logger} from "./Logger";
 
+const config = {
+    levels: {
+        error: 0,
+        debug: 1,
+        warn: 2,
+        info: 4
+    },
+    colors: {
+        error: "red",
+        debug: "blue",
+        warn: "yellow",
+        info: "cyan"
+    }
+};
+
+winston.addColors(config.colors);
+
+let alignColorsAndTime = winston.format.combine(
+    winston.format.colorize({
+        all: true
+    }),
+    winston.format.printf(
+        (info: any) => {
+            return `API \t | logLevel: ${info.level}, message: ${info.message}, location: ${info.location}, time: ${info.time}`;
+        }
+    )
+);
+
 export class LogRequest {
-    private static logProvider = new (winston.Logger)({
+    private static logProvider = winston.createLogger({
+        levels: config.levels,
         transports: [
-            new (winston.transports.Console)({level: "silly", colorize: false, stringify: true, json: true})
-        ],
-        exitOnError: false
+            new (winston.transports.Console)({
+                format: alignColorsAndTime
+            })
+        ]
     });
 
     static logConsole = (req, res, next) => {
